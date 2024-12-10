@@ -1,9 +1,9 @@
 package client;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import server.ResponseDTO;
+
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 
@@ -18,26 +18,48 @@ public class ClientRequestHandler {
 
     public void start() {
         try (Socket socket = new Socket(serverAddress, serverPort);
-             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+             ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
 
             Scanner scanner = new Scanner(System.in);
             System.out.println("Connected to server. Type your commands:");
 
             while (true) {
                 System.out.print("> ");
-                String message = scanner.nextLine();
-                out.println(message);
+                String command = scanner.nextLine();
 
-                String response = in.readLine();
-                System.out.println("Response from server: " + response);
+                // Break command into components
+                String[] parts = command.split(" ");
+                String action = parts[0].toUpperCase();  // e.g., UPDATE or PATH
 
-                if ("exit".equalsIgnoreCase(message)) {
+                // Prepare the RequestDTO based on the command
+                RequestDTO request = null;
+                if ("UPDATE".equals(action) && parts.length == 4) {
+                    String source = parts[1];
+                    String destination = parts[2];
+                    int travelTime = Integer.parseInt(parts[3]);
+                    request = new RequestDTO(action, source, destination, travelTime);
+                } else if ("PATH".equals(action) && parts.length == 3) {
+                    String source = parts[1];
+                    String destination = parts[2];
+                    request = new RequestDTO(action, source, destination, 0);  // Travel time not needed for PATH
+                } else if ("EXIT".equalsIgnoreCase(action)) {
+                    System.out.println("Exiting...");
                     break;
+                } else {
+                    System.out.println("Invalid command. Use UPDATE <source> <destination> <travelTime> or PATH <source> <destination>");
+                    continue;
                 }
+
+                // Send RequestDTO to the server
+                out.writeObject(request);
+
+                // Receive ResponseDTO from the server
+                ResponseDTO response = (ResponseDTO) in.readObject();
+                System.out.println("Response from server: " + response.getMessage());
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
