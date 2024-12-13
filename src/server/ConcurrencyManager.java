@@ -17,6 +17,32 @@ public class ConcurrencyManager {
         this.port = port;
         this.clientPool = Executors.newFixedThreadPool(10);
         this.graph = new Graph(); // Initialize the graph here
+        graph.addNode("Brig");
+        graph.addNode("Visp");
+        graph.addNode("Stalden");
+        graph.addNode("Eyholz");
+        graph.addNode("Raron");
+        graph.addNode("Gamsen");
+        graph.addEdge("Brig", "Stalden", 17);
+        graph.addEdge("Stalden", "Brig", 17);
+        graph.addEdge("Brig", "Visp", 10);
+        graph.addEdge("Visp", "Brig", 10);
+        graph.addEdge("Brig", "Eyholz", 6);
+        graph.addEdge("Eyholz", "Brig", 6);
+        graph.addEdge("Brig", "Gamsen", 4);
+        graph.addEdge("Gamsen", "Brig", 4);
+        graph.addEdge("Eyholz", "Visp", 5);
+        graph.addEdge("Visp", "Eyholz", 5);
+        graph.addEdge("Eyholz", "Gamsen", 4);
+        graph.addEdge("Gamsen", "Eyholz", 4);
+        graph.addEdge("Gamsen", "Visp", 8);
+        graph.addEdge("Visp", "Gamsen", 8);
+        graph.addEdge("Visp", "Stalden", 10);
+        graph.addEdge("Stalden", "Visp", 10);
+        graph.addEdge("Visp", "Raron", 5);
+        graph.addEdge("Raron", "Visp", 5);
+
+
     }
 
     public void start() {

@@ -22,6 +22,14 @@ public class Graph {
         }
     }
 
+    public void updateEdgeWeight(String source, String destination, int weight) {
+        Node sourceNode = nodes.get(source);
+        Node destinationNode = nodes.get(destination);
+        if (sourceNode != null && destinationNode != null) {
+
+        }
+    }
+
     public Map<String, Node> getNodes() {
         return nodes;
     }
