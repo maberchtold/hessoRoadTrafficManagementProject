@@ -45,9 +45,15 @@ public class ConcurrencyManager {
 
     }
 
+    public Graph getGraph() {
+        return graph;
+    }
+
     public void start() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Server started on port " + port);
+            ServerUI serverUI = new ServerUI(graph);
+            serverUI.showUI();
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("New client connected: " + clientSocket.getInetAddress());
