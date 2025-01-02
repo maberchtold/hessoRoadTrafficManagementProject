@@ -34,10 +34,15 @@ public class Graph {
 
     public void updateEdgeWeight(String source, String destination, int weight) {
         Node sourceNode = nodes.get(source);
-        Node destinationNode = nodes.get(destination);
-        if (sourceNode != null && destinationNode != null) {
-
+        if (sourceNode != null) {
+            for (Edge edge : sourceNode.getEdges()) {
+                if (edge.getDestination().getName().equals(destination)) {
+                    edge.setWeight(weight); // Update the edge weight
+                    return;
+                }
+            }
         }
+        throw new IllegalArgumentException("Edge from " + source + " to " + destination + " does not exist.");
     }
 
     public Map<String, Node> getNodes() {

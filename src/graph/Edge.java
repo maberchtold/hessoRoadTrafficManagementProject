@@ -2,7 +2,7 @@ package graph;
 
 public class Edge {
     private final Node destination;
-    private final int weight;
+    private int weight;
 
     public Edge(Node destination, int weight) {
         this.destination = destination;
@@ -17,5 +17,8 @@ public class Edge {
         return weight;
     }
 
+    public void setWeight(int weight) {
+        this.weight = weight;
+    }
 
 }
