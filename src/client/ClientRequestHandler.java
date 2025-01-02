@@ -10,10 +10,41 @@ import java.util.Scanner;
 public class ClientRequestHandler {
     private final String serverAddress;
     private final int serverPort;
+    private Socket socket;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
 
     public ClientRequestHandler(String serverAddress, int serverPort) {
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
+    }
+
+    /**
+     * Initialize the connection to the server.
+     */
+    public void connect() {
+        try {
+            socket = new Socket(serverAddress, serverPort);
+            out = new ObjectOutputStream(socket.getOutputStream());
+            in = new ObjectInputStream(socket.getInputStream());
+            System.out.println("Connected to the server.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Close the connection to the server.
+     */
+    public void disconnect() {
+        try {
+            if (in != null) in.close();
+            if (out != null) out.close();
+            if (socket != null) socket.close();
+            System.out.println("Disconnected from the server.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -26,10 +57,7 @@ public class ClientRequestHandler {
      * @return The response from the server as a ResponseDTO.
      */
     public ResponseDTO sendRequest(String command, String source, String destination, int travelTime) {
-        try (Socket socket = new Socket(serverAddress, serverPort);
-             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-             ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
-
+        try {
             // Create and send the request
             RequestDTO request = new RequestDTO(command, source, destination, travelTime);
             out.writeObject(request);
@@ -48,52 +76,43 @@ public class ClientRequestHandler {
      * Interactive command-line interface for client requests.
      */
     public void start() {
-        try (Socket socket = new Socket(serverAddress, serverPort);
-             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-             ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
-
-            Scanner scanner = new Scanner(System.in);
+        connect(); // Ensure the connection is established for CLI use
+        try (Scanner scanner = new Scanner(System.in)) {
             System.out.println("Connected to server. Type your commands:");
 
             while (true) {
                 System.out.print("> ");
                 String command = scanner.nextLine();
 
-                // Prepare and send the RequestDTO
+                // Parse the command
                 String[] parts = command.split(" ");
                 String action = parts[0].toUpperCase();
 
-                RequestDTO request;
+                ResponseDTO response;
+
                 if ("UPDATE".equals(action) && parts.length == 4) {
                     String source = parts[1];
                     String destination = parts[2];
                     int travelTime = Integer.parseInt(parts[3]);
-                    request = new RequestDTO(action, source, destination, travelTime);
+                    response = sendRequest(action, source, destination, travelTime);
                 } else if ("PATH".equals(action) && parts.length == 3) {
                     String source = parts[1];
                     String destination = parts[2];
-                    request = new RequestDTO(action, source, destination, 0);
+                    response = sendRequest(action, source, destination, 0);
                 } else if ("EXIT".equalsIgnoreCase(action)) {
-                    request = new RequestDTO(action, "", "", 0);
-                    out.writeObject(request);
-                    out.flush();
-                    System.out.println("Exiting...");
-                    break;
+                    response = sendRequest(action, "", "", 0);
+                    System.out.println(response.getMessage());
+                    break; // Exit the loop
                 } else {
                     System.out.println("Invalid command. Use UPDATE <source> <destination> <travelTime> or PATH <source> <destination>");
                     continue;
                 }
 
-                out.writeObject(request);
-                out.flush();
-
-                // Read and display the response
-                ResponseDTO response = (ResponseDTO) in.readObject();
-                System.out.println("Response from server: " + response.getMessage());
+                // Display the server's response
+                System.out.println("Server: " + response.getMessage());
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        } finally {
+            disconnect(); // Ensure the connection is closed when exiting
         }
     }
 }

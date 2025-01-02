@@ -4,21 +4,34 @@ import server.ResponseDTO;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class ClientUI {
     private final ClientRequestHandler clientRequestHandler;
 
     public ClientUI(String serverAddress, int serverPort) {
         this.clientRequestHandler = new ClientRequestHandler(serverAddress, serverPort);
+        clientRequestHandler.connect(); // Establish the connection
         createAndShowUI();
     }
 
     private void createAndShowUI() {
         JFrame frame = new JFrame("Client UI");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Handle closing manually
         frame.setSize(400, 300);
+
+        // Add window listener to handle EXIT command on window close
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                // Send EXIT command to the server
+                clientRequestHandler.sendRequest("EXIT", "", "", 0);
+                clientRequestHandler.disconnect(); // Ensure the connection is closed
+                System.out.println("Application closed.");
+                System.exit(0); // Close the application
+            }
+        });
 
         JPanel panel = new JPanel();
         panel.setLayout(new GridLayout(6, 2));
@@ -45,12 +58,10 @@ public class ClientUI {
         // Buttons
         JButton updateButton = new JButton("Update");
         JButton pathButton = new JButton("Path");
-        JButton exitButton = new JButton("Exit");
 
         // Add buttons to panel
         panel.add(updateButton);
         panel.add(pathButton);
-        panel.add(exitButton);
 
         frame.add(panel, BorderLayout.CENTER);
         frame.add(scrollPane, BorderLayout.SOUTH);
@@ -74,12 +85,6 @@ public class ClientUI {
             String destination = destinationField.getText();
             ResponseDTO response = clientRequestHandler.sendRequest("PATH", source, destination, 0);
             responseArea.append("Server: " + response.getMessage() + "\n");
-        });
-
-        exitButton.addActionListener(e -> {
-            clientRequestHandler.sendRequest("EXIT", "", "", 0);
-            responseArea.append("Exiting...\n");
-            frame.dispose();
         });
 
         // Display the frame
