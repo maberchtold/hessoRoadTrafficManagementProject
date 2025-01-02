@@ -1,6 +1,8 @@
 package graph;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Graph {
@@ -19,6 +21,22 @@ public class Graph {
         Node destinationNode = nodes.get(destination);
         if (sourceNode != null && destinationNode != null) {
             sourceNode.addEdge(new Edge(destinationNode, weight));
+        }
+    }
+
+    public List<Edge> getEdges() {
+        List<Edge> edgeList = new ArrayList<>();
+        for (Node node : nodes.values()) {
+            edgeList.addAll(node.getEdges());
+        }
+        return edgeList;
+    }
+
+    public void updateEdgeWeight(String source, String destination, int weight) {
+        Node sourceNode = nodes.get(source);
+        Node destinationNode = nodes.get(destination);
+        if (sourceNode != null && destinationNode != null) {
+
         }
     }
 
