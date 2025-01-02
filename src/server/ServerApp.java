@@ -8,6 +8,5 @@ public class ServerApp {
         ServerUI serverUI = new ServerUI(concurrencyManager.getGraph());
         serverUI.showUI();
 
-
     }
 }
