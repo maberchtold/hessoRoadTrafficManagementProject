@@ -2,6 +2,7 @@ package server;
 
 import client.RequestDTO;
 import graph.Graph;
+import algorithms.Dijkstra;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -21,32 +22,44 @@ public class RequestProcessor implements Runnable {
         try (ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
              ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream())) {
 
-            // Read the RequestDTO from the client
-            RequestDTO request = (RequestDTO) in.readObject();
-            String command = request.getCommand();
-            String source = request.getSource();
-            String destination = request.getDestination();
-            int travelTime = request.getTravelTime();
+            boolean running = true;
+            while (running) {
+                RequestDTO request = (RequestDTO) in.readObject();
+                String command = request.getCommand();
+                String source = request.getSource();
+                String destination = request.getDestination();
+                int travelTime = request.getTravelTime();
 
-            ResponseDTO response;
+                ResponseDTO response;
 
-            // Process the command
-            if ("UPDATE".equals(command)) {
-                graph.addEdge(source, destination, travelTime);
-                response = new ResponseDTO("success", "Travel time updated successfully.");
-            } else if ("PATH".equals(command)) {
-                // Simulate shortest path calculation (replace with actual logic)
-                String shortestPath = "Shortest path from " + source + " to " + destination + " is ...";
-                response = new ResponseDTO("success", shortestPath);
-            } else {
-                response = new ResponseDTO("error", "Invalid command.");
+                if ("UPDATE".equals(command)) {
+                    try {
+                        graph.updateEdgeWeight(source, destination, travelTime);
+                        response = new ResponseDTO("success", "Travel time updated successfully.");
+                    } catch (IllegalArgumentException e) {
+                        response = new ResponseDTO("error", e.getMessage());
+                    }
+                } else if ("PATH".equals(command)) {
+                    Dijkstra.PathResult pathResult = Dijkstra.shortestPath(graph, source, destination);
+                    if (pathResult.getPath().isEmpty()) {
+                        response = new ResponseDTO("error", "No path found between " + source + " and " + destination + ".");
+                    } else {
+                        response = new ResponseDTO("success", pathResult.toString());
+                    }
+                } else if ("EXIT".equalsIgnoreCase(command)) {
+                    response = new ResponseDTO("success", "Connection closing...");
+                    running = false;
+                } else {
+                    response = new ResponseDTO("error", "Invalid command.");
+                }
+
+                out.writeObject(response);
+                out.flush();
             }
-
-            // Send the ResponseDTO back to the client
-            out.writeObject(response);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 }
