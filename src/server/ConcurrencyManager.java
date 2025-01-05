@@ -11,12 +11,18 @@ import java.util.concurrent.Executors;
 public class ConcurrencyManager {
     private final int port;
     private final ExecutorService clientPool;
-    private final Graph graph; // Shared graph object
+    private final Graph graph;
+    private final RequestProcessorFactory processorFactory;
 
     public ConcurrencyManager(int port) {
         this.port = port;
         this.clientPool = Executors.newFixedThreadPool(10);
-        this.graph = new Graph(); // Initialize the graph here
+        this.graph = new Graph();
+        this.processorFactory = new DefaultRequestProcessorFactory(); // Use the factory
+        initializeGraph();
+    }
+
+    private void initializeGraph() {
         graph.addNode("Brig");
         graph.addNode("Visp");
         graph.addNode("Stalden");
@@ -42,7 +48,6 @@ public class ConcurrencyManager {
         graph.addEdge("Visp", "Raron", 5);
         graph.addEdge("Raron", "Visp", 5);
 
-
     }
 
     public Graph getGraph() {
@@ -57,8 +62,8 @@ public class ConcurrencyManager {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("New client connected: " + clientSocket.getInetAddress());
-                // Pass both the client socket and the graph to RequestProcessor
-                clientPool.execute(new RequestProcessor(clientSocket, graph));
+                RequestProcessor processor = processorFactory.createRequestProcessor(clientSocket, graph);
+                clientPool.execute(processor); // Use processor created by the factory
             }
         } catch (IOException e) {
             e.printStackTrace();
